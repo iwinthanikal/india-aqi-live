@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Air Safety Check</title>
+    <style>
+        :root {
+            --theme-color: #a0a0a0; /* Default Grey */
+            --theme-glow: rgba(160, 160, 160, 0.3);
+            --text-main: #1a1a1a;
+            --text-sub: #666;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            /* Ambient Background Glow */
+            background-image: radial-gradient(circle at 50% 30%, var(--theme-glow) 0%, transparent 70%);
+            background-attachment: fixed;
+            transition: background-image 1s ease, background-color 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Card */
+        .container {
+            width: 85%;
+            max-width: 380px;
+            background: rgba(255, 255, 255, 0.65); /* Translucent White */
+            backdrop-filter: blur(25px); /* The "Frosted Glass" Blur */
+            -webkit-backdrop-filter: blur(25px);
+            padding: 2.5rem 2rem;
+            border-radius: 30px;
+            text-align: center;
+            /* Ambient Shadow matching the AQI color */
+            box-shadow: 0 20px 60px var(--theme-glow), 
+                        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            transition: box-shadow 0.5s ease;
+        }
+
+        h1 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-sub);
+            margin: 0 0 5px 0;
+            font-weight: 600;
+        }
+        
+        .location-badge {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            color: var(--text-main);
+        }
+
+        /* Clean Minimal AQI Display */
+        .aqi-display {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .aqi-number {
+            font-size: 5rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--text-main), var(--theme-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .aqi-label {
+            font-size: 0.9rem;
+            color: var(--theme-color);
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-top: -5px;
+        }
+
+        .status-message {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--theme-color);
+            line-height: 1.4;
+        }
+
+        /* Clean Grid for Details */
+        .advice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .advice-card {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: transform 0.2s ease;
+        }
+        
+        .advice-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .advice-card strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-sub);
+        }
+        
+        .advice-card span {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .loader {
+            font-size: 1rem;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+        .hidden { display: none; }
+
+        footer {
+            margin-top: 2.5rem;
+            font-size: 0.7rem;
+            color: #999;
+            opacity: 0.7;
+        }
+
+        /* Button to retry if needed */
+        .retry-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: var(--text-main);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="loader" class="loader">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🌍</div>
+            Locating you...<br>
+            <small>Please allow location access</small>
+        </div>
+
+        <div id="app" class="hidden">
+            <h1>Air Quality In</h1>
+            <div class="location-badge" id="city-name">--</div>
+
+            <div class="aqi-display">
+                <div class="aqi-number" id="aqi-val">--</div>
+                <div class="aqi-label">AQI INDEX</div>
+            </div>
+
+            <div class="status-message" id="status-text">--</div>
+
+            <div class="advice-grid">
+                <div class="advice-card">
+                    <strong>😷 Mask</strong>
+                    <span id="mask-advice">--</span>
+                </div>
+                <div class="advice-card">
+                    <strong>🏃 Outdoors</strong>
+                    <span id="outdoor-advice">--</span>
+                </div>
+                <div class="advice-card">
+                    <strong>🪟 Windows</strong>
+                    <span id="window-advice">--</span>
+                </div>
+                <div class="advice-card">
+                    <strong>👶 Kids</strong>
+                    <span id="sensitive-advice">--</span>
+                </div>
+            </div>
+
+            <footer>
+                Live Data via WAQI API
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // --- ⚠️ PASTE YOUR API KEY BELOW ⚠️ ---
+        const API_TOKEN = 3deffa951b66eff3cbc9f96f8f5ecb14af72fda9 ; 
+        // --------------------------------------
+
+        const ui = {
+            loader: document.getElementById('loader'),
+            app: document.getElementById('app'),
+            city: document.getElementById('city-name'),
+            aqiVal: document.getElementById('aqi-val'),
+            statusText: document.getElementById('status-text'),
+            mask: document.getElementById('mask-advice'),
+            outdoor: document.getElementById('outdoor-advice'),
+            window: document.getElementById('window-advice'),
+            sensitive: document.getElementById('sensitive-advice')
+        };
+
+        window.onload = () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(fetchAQI, handleError);
+            } else {
+                showError("Geolocation is not supported.");
+            }
+        };
+
+        function fetchAQI(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const url = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${API_TOKEN}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "ok") updateUI(data.data);
+                    else showError("API Error. Check token.");
+                })
+                .catch(() => showError("Internet connection error."));
+        }
+
+        function updateUI(data) {
+            const aqi = data.aqi;
+            const city = data.city.name.split(",")[0];
+
+            ui.loader.classList.add('hidden');
+            ui.app.classList.remove('hidden');
+
+            ui.city.textContent = city;
+            ui.aqiVal.textContent = aqi;
+
+            const logic = getSafetyLogic(aqi);
+
+            // Apply Ambient Theme Colors
+            document.documentElement.style.setProperty('--theme-color', logic.hex);
+            document.documentElement.style.setProperty('--theme-glow', logic.glow);
+            
+            ui.statusText.textContent = logic.status;
+            
+            // Set Advice
+            ui.mask.textContent = logic.mask;
+            ui.outdoor.textContent = logic.outdoor;
+            ui.window.textContent = logic.window;
+            ui.sensitive.textContent = logic.sensitive;
+        }
+
+        function getSafetyLogic(aqi) {
+            if (aqi <= 50) {
+                return {
+                    hex: "#00b894", // Green
+                    glow: "rgba(0, 184, 148, 0.4)",
+                    status: "Air is Pure. Breathe Deeply.",
+                    mask: "No",
+                    outdoor: "Great!",
+                    window: "Open",
+                    sensitive: "Safe"
+                };
+            } else if (aqi <= 100) {
+                return {
+                    hex: "#fdcb6e", // Yellow/Gold
+                    glow: "rgba(253, 203, 110, 0.5)",
+                    status: "Moderate. Acceptable.",
+                    mask: "Optional",
+                    outdoor: "Okay",
+                    window: "Okay",
+                    sensitive: "Watch out"
+                };
+            } else if (aqi <= 150) {
+                return {
+                    hex: "#e17055", // Orange
+                    glow: "rgba(225, 112, 85, 0.5)",
+                    status: "Unhealthy for Sensitive Groups.",
+                    mask: "Sensitive ppl",
+                    outdoor: "Limit",
+                    window: "Close",
+                    sensitive: "Limit"
+                };
+            } else if (aqi <= 200) {
+                return {
+                    hex: "#d63031", // Red
+                    glow: "rgba(214, 48, 49, 0.5)",
+                    status: "Unhealthy. Wear a Mask.",
+                    mask: "Yes",
+                    outdoor: "Avoid",
+                    window: "Close",
+                    sensitive: "Avoid"
+                };
+            } else if (aqi <= 300) {
+                return {
+                    hex: "#6c5ce7", // Purple
+                    glow: "rgba(108, 92, 231, 0.5)",
+                    status: "Very Unhealthy. Hazardous.",
+                    mask: "Required",
+                    outdoor: "No",
+                    window: "Seal",
+                    sensitive: "DANGER"
+                };
+            } else {
+                return {
+                    hex: "#2d3436", // Maroon/Black
+                    glow: "rgba(45, 52, 54, 0.6)",
+                    status: "EMERGENCY. TOXIC AIR.",
+                    mask: "N95 !!",
+                    outdoor: "NO !!",
+                    window: "Seal",
+                    sensitive: "DANGER"
+                };
+            }
+        }
+
+        function handleError(error) {
+            let msg = "Please allow location access.";
+            if (error.code !== error.PERMISSION_DENIED) msg = "An error occurred.";
+            showError(msg);
+        }
+
+        function showError(msg) {
+            ui.loader.innerHTML = `⚠️ <br>${msg}<br><button class="retry-btn" onclick="location.reload()">Retry</button>`;
+        }
+    </script>
+</body>
+</html>
